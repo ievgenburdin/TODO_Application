@@ -6,10 +6,10 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate as auth_authenticate
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
-
+from django.contrib.auth.decorators import login_required
 
 def root(request):
-    return HttpResponseRedirect('index')
+    return HttpResponseRedirect('/index/')
 
 
 def login(request):
@@ -24,7 +24,7 @@ def login(request):
                 if user:
                     if user.is_active:
                         auth_login(request, user)
-                        return HttpResponse('logged in')
+                        return HttpResponseRedirect('/index/')
                 else:
                     message = "User name or password is incorrect"
         except User.DoesNotExist:
@@ -33,7 +33,7 @@ def login(request):
                 user = user_form.save()
                 user.set_password(user.password)
                 user.save()
-                return HttpResponse('Profile Saved')
+                return HttpResponseRedirect('/index/')
             else:
                 message = user_form.errors
 
@@ -43,9 +43,9 @@ def login(request):
 
 def logout(request):
     auth_logout(request)
-    return HttpResponse('login')
+    return HttpResponseRedirect('/index/')
 
-
+@login_required
 def index(request):
     project_list = Project.objects.order_by('name')
     task_list = Task.objects.order_by('priority')
