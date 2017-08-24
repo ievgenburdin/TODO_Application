@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+
+{% block title_block %}
+    {{ "Index" }}
+{% endblock %}
+
+{% block body_block %}
+    <div>
+        {% for task in tasks %}
+            <div>
+                {{ task.priority }}-{{ task.title }}-{{task.project}}-{{ task.project.color }}
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

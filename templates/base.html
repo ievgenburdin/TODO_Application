@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link type="text/css" rel="stylesheet" href="{% static 'todo/style.css' %}" />
+
+    <title>
+        {% block title_block %}
+        To DO -{{ page }}
+        {% endblock %}
+    </title>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            TODO
+        </div>
+        {% if user.is_authenticated %}
+            {{ user.username }} -
+        <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+        {% endif %}
+    </header>
+    <div class="side_bar_menu">
+        {% for project in projects %}
+            <div>
+                {{ project.name }} {{ project.color }}
+            </div>
+        {% endfor %}
+        <a>Add project</a>
+    </div>
+
+
+    <div class="body_block_menu">
+        {% block body_block %}
+
+        {% endblock %}
+    </div>
+</body>
+</html>
