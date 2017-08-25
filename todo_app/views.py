@@ -47,9 +47,9 @@ def logout(request):
 
 @login_required
 def index(request):
-    project_list = Project.objects.order_by('name')
-    task_list = Task.objects.order_by('priority')
-
+    username = request.user.username
+    project_list = Project.objects.filter(user__username=username)
+    task_list = Task.objects.filter(project__user__username=username)
     context_dict = {'projects':project_list,
                     'tasks': task_list}
     return render(request, 'index.html', context_dict)

@@ -7,11 +7,81 @@
 {% endblock %}
 
 {% block body_block %}
-    <div>
-        {% for task in tasks %}
-            <div>
-                {{ task.priority }}-{{ task.title }}-{{task.project}}-{{ task.project.color }}
+    <content>
+        {% if user.is_authenticated %}
+            <div class="side_bar_menu">
+                <button class="side_bar_menu_links" onclick="openTasksByDate(event, 0)">Today</button>
+                <button class="side_bar_menu_links">Next 7 days</button>
+                <h3>Projects:</h3>
+                {% if projects %}
+                    {% for project in projects %}
+                        <button class="side_bar_menu_links" onclick="openProject(event, '{{ project.name }}')">
+                            {{ project.name }} {{ project.color }}</button>
+                    {% endfor %}
+                {% else %}
+                    <div class="side_bar_menu_links">There are no projects</div>
+                {% endif %}
+                <button>Add project</button>
             </div>
-        {% endfor %}
-    </div>
+            <div class="task_menu">
+                {% if tasks %}
+                    {% for task in tasks %}
+                        <div id="{{task.project}}" class="task_menu_content">
+                            <div class="task_priority">{{ task.priority }}</div>
+                            <div class="task_title">{{ task.title }}</div>
+                            <div class="task_project">{{task.project}}</div>
+                            <div class="task_date">{{task.date}}</div>
+                            <div class="task_color">{{ task.project.color }}</div>
+
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="task_menu_content">There are no tasks</div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </content>
+    <script>
+    document.onload = hideTaskMenuContent();
+    function hideTaskMenuContent() {
+        var task_menu_content;
+        task_menu_content = document.getElementsByClassName("task_menu_content");
+        for (i = 0; i < task_menu_content.length; i++){
+            task_menu_content[i].style.display = "none";
+        }
+    }
+
+    function openTasksByDate(evt, numOfDays) {
+        var i, task_menu_content, side_bar_menu_links, dateNow;
+        task_menu_content = document.getElementsByClassName("task_menu_content");
+        dateNow = new Date();
+        for (i = 0; i < task_menu_content.length; i++){
+
+            task_menu_content[i].style.display = "block";
+        }
+        side_bar_menu_links = document.getElementsByClassName("side_bar_menu_links");
+        for (i = 0; i < side_bar_menu_links.length; i++){
+            side_bar_menu_links[i].className = side_bar_menu_links[i].className.replace("active", "");
+        }
+        evt.currentTarget.className += " active";
+    }
+
+    function openProject(evt, porjectName) {
+        var i, task_menu_content, side_bar_menu_links, task;
+        task_menu_content = document.getElementsByClassName("task_menu_content");
+        for (i = 0; i < task_menu_content.length; i++){
+            task_menu_content[i].style.display = "none";
+        }
+        side_bar_menu_links = document.getElementsByClassName("side_bar_menu_links");
+        for (i = 0; i < side_bar_menu_links.length; i++){
+            side_bar_menu_links[i].className = side_bar_menu_links[i].className.replace("active", "");
+        }
+        task = document.getElementById(porjectName);
+        if(task){
+            task.style.display = "block";
+        }
+        evt.currentTarget.className += " active";
+    }
+
+    </script>
 {% endblock %}
