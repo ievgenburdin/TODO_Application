@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 class Project(models.Model):
     name = models.CharField(max_length=30, unique=True)
-    color = models.IntegerField()
+    color = models.CharField(max_length=7)
     user = models.ForeignKey(User, on_delete=models.PROTECT)
 
     def __str__(self):

@@ -9,9 +9,9 @@
 {% block body_block %}
     <content>
         {% if user.is_authenticated %}
-            <div class="side_bar_menu">
-                <button class="side_bar_menu_links" onclick="openTasksByDate(event, 0)">Today</button>
-                <button class="side_bar_menu_links">Next 7 days</button>
+            <div id="side_bar_menu">
+                <button class="side_bar_menu_links" onclick="openTasksByDate(event, 0)" id="defaultOpen">Today</button>
+                <button class="side_bar_menu_links" onclick="openTasksByDate(event, 7)">Next 7 days</button>
                 <h3>Projects:</h3>
                 {% if projects %}
                     {% for project in projects %}
@@ -21,12 +21,18 @@
                 {% else %}
                     <div class="side_bar_menu_links">There are no projects</div>
                 {% endif %}
-                <button>Add project</button>
+                <form method="post" id="addProjectForm">
+                    {% csrf_token %}
+                    <input id="projectName" placeholder="Enter project name" type="text">
+                    <input id="projectColor" type="color">
+                    <input type="button" value="Save project" onclick="sendProjectForm('{{ user }}','{% url 'add_project' %}')">
+                </form>
+                <button class="side_bar_menu_links"  onclick="showProjectForm(event)">Add project</button>
             </div>
             <div class="task_menu">
                 {% if tasks %}
                     {% for task in tasks %}
-                        <div id="{{task.project}}" class="task_menu_content">
+                        <div class="task_menu_content">
                             <div class="task_priority">{{ task.priority }}</div>
                             <div class="task_title">{{ task.title }}</div>
                             <div class="task_project">{{task.project}}</div>
@@ -42,7 +48,8 @@
         {% endif %}
     </content>
     <script>
-    document.onload = hideTaskMenuContent();
+    document.onload = document.getElementById("defaultOpen").click();
+
     function hideTaskMenuContent() {
         var task_menu_content;
         task_menu_content = document.getElementsByClassName("task_menu_content");
@@ -50,15 +57,8 @@
             task_menu_content[i].style.display = "none";
         }
     }
-
-    function openTasksByDate(evt, numOfDays) {
-        var i, task_menu_content, side_bar_menu_links, dateNow;
-        task_menu_content = document.getElementsByClassName("task_menu_content");
-        dateNow = new Date();
-        for (i = 0; i < task_menu_content.length; i++){
-
-            task_menu_content[i].style.display = "block";
-        }
+    function switchSideBarButton(evt) {
+        var side_bar_menu_links;
         side_bar_menu_links = document.getElementsByClassName("side_bar_menu_links");
         for (i = 0; i < side_bar_menu_links.length; i++){
             side_bar_menu_links[i].className = side_bar_menu_links[i].className.replace("active", "");
@@ -66,21 +66,69 @@
         evt.currentTarget.className += " active";
     }
 
+    function openTasksByDate(evt, numOfDays) {
+        var i, today,nextDays, task_dates, task_date, day;
+        hideTaskMenuContent();
+        task_dates = document.getElementsByClassName("task_date");
+        today = new Date();
+        nextDays = new Date();
+        nextDays.setDate(today.getDate() + numOfDays);
+        for (i = 0; i < task_dates.length; i++){
+            task_date = new Date(task_dates[i].textContent);
+            if (task_date <= nextDays){
+                task_dates[i].parentNode.style.display = "block";
+            }
+        }
+        switchSideBarButton(evt);
+    }
+
     function openProject(evt, porjectName) {
-        var i, task_menu_content, side_bar_menu_links, task;
-        task_menu_content = document.getElementsByClassName("task_menu_content");
-        for (i = 0; i < task_menu_content.length; i++){
-            task_menu_content[i].style.display = "none";
+        var i, task_projects;
+        task_projects = document.getElementsByClassName("task_project");
+        hideTaskMenuContent();
+        for (i = 0; i < task_projects.length; i++){
+            if (task_projects[i].textContent === porjectName){
+                task_projects[i].parentNode.style.display = "block";
+            }
         }
-        side_bar_menu_links = document.getElementsByClassName("side_bar_menu_links");
-        for (i = 0; i < side_bar_menu_links.length; i++){
-            side_bar_menu_links[i].className = side_bar_menu_links[i].className.replace("active", "");
-        }
-        task = document.getElementById(porjectName);
-        if(task){
-            task.style.display = "block";
-        }
-        evt.currentTarget.className += " active";
+        switchSideBarButton(evt);
+    }
+
+    function showProjectForm(evt) {
+        var projectForm;
+        projectForm = document.getElementById("addProjectForm");
+        projectForm.style.display = "block";
+        switchSideBarButton(evt);
+    }
+
+    function sendProjectForm(user, url) {
+        var projectName, projectColor, xhr, jsonProjectData;
+        projectName = document.getElementById("projectName").value;
+        projectColor = document.getElementById("projectColor").value;
+        xhr = new XMLHttpRequest();
+        jsonProjectData = JSON.stringify({
+            'projectName': projectName,
+            'projectColor': projectColor,
+            'user':user
+        });
+        xhr.open('post', url, true);
+        xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+        xhr.send(jsonProjectData);
+        xhr.onreadystatechange = function () {
+            var newButton, sideBarMenu, jsonResponse;
+            if (xhr.readyState != 4) return;
+
+            if (xhr.status == 200) {
+                jsonResponse = JSON.parse(xhr.responseText);
+                newButton = document.createElement('button');
+                newButton.className = "side_bar_menu_links";
+                newButton.innerHTML = jsonResponse['name'] + " " + jsonResponse['color'];
+                sideBarMenu = document.getElementById("side_bar_menu");
+                sideBarMenu.appendChild(newButton);
+            } else {
+                console.log("NOT SuccessLoad");
+            }
+        };
     }
 
     </script>

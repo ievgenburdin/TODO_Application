@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^$', views.index, name='root'),
     url(r'^admin/', admin.site.urls),
     url(r'^index/', views.index, name='index'),
+    url(r'^add_project/', views.add_project, name='add_project'),
     url(r'^login/', views.login, name='login'),
     url(r'^logout/', views.logout, name='logout'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
