@@ -140,7 +140,7 @@ def add_project(request):
         project = Project(name=project_data['projectName'],
                            color=project_data['projectColor'],
                            user=user)
-        #project.save()
+        project.save()
         response_data['name'] = project.name
         response_data['color'] = project.color
 
@@ -167,6 +167,7 @@ def add_task(request):
         response_data['taskDate'] = task.date
         response_data['taskPriority'] = task.priority
         response_data['taskProject'] = task.project.name
+        response_data['taskProjectColor'] = task.project.color
     else:
         response_data['errors'] = "Wrong request method"
     return HttpResponse(

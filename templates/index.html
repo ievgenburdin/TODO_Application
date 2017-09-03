@@ -11,8 +11,8 @@
         {% if user.is_authenticated %}
             <div class="side_bar_menu">
                 <div id="side_bar_content">
-                    <button class="side_bar_menu_links" onclick="getTasks('{% url 'get_today_task' %}')" id="defaultOpen">Today</button>
-                    <button class="side_bar_menu_links" onclick="getTasks('{% url 'get_weekly_task' %}')">Next 7 days</button>
+                    <button class="side_bar_menu_links" onclick="getTasks('Today', '{% url 'get_today_task' %}')" id="defaultOpen">Today</button>
+                    <button class="side_bar_menu_links" onclick="getTasks('Next 7 days', '{% url 'get_weekly_task' %}')">Next 7 days</button>
                     <h1>Projects:</h1>
                     {% if projects %}
                         {% for project in projects %}
@@ -40,17 +40,15 @@
 
             </div>
             <div class="task_menu">
-
-                    <table class="task_menu_content" id="task_menu_content">
-                            <tr class="task_menu_item">
-                                <td class="task_priority"></td>
-                                <td class="task_title"></td>
-                                <td class="task_project"></td>
-                                <td class="task_color"></td>
-                            </tr>
-                    </table>
-
-
+                <table class="task_menu_content" id="task_menu_content">
+                    <p id="headerContent"></p>
+                    <tr class="task_menu_item">
+                        <td class="task_priority"></td>
+                        <td class="task_title"></td>
+                        <td class="task_project"></td>
+                        <td class="task_color"></td>
+                    </tr>
+                </table>
                 <p id="errorTaskform" class="errorMessage"></p>
                 <button id="addTasktButton" onclick="showHideTaskForm()">Add task</button>
                 <form id="addTaskForm">
@@ -62,14 +60,14 @@
                             {% endfor %}
                         </select>
                         <select id="taskPriorityInput">
-                            <option value="1">High</option>
+                            <option value="3">High</option>
                             <option value="2">Midle</option>
-                            <option value="3">Low</option>
+                            <option value="1">Low</option>
                         </select>
                         <input id="taskDateInput" type="date">
                     </div>
                     <div>
-                        <button type="button" class="formButtonAdd" onclick="sendTaskForm('{% url 'add_task' %}')">Add</button>
+                        <button type="button" class="formButtonAdd" onclick="sendTaskForm(event ,'{% url 'add_task' %}')">Add</button>
                         <button type="button" class="formButtonCancel" id="addTaskCancel" onclick="showHideTaskForm()">Cancel</button>
                     </div>
                 </form>

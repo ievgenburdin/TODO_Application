@@ -208,8 +208,3 @@ input, select{
     background-color: inherit;
     color: inherit;
 }
-
-defaultTaskRow{
-    display: none;
-    color: green;
-}
