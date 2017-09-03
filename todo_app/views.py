@@ -108,9 +108,10 @@ def get_week_task(request):
 @login_required
 def get_project_task(request):
     username = request.user.username
-    projectname = request.GET.get('projectname')
+    if request.method == 'GET':
+        projectname = request.GET['project']
     today = datetime.now().date()
-    task_list = Task.objects.filter(project__user__username=username, ).order_by('date', 'priority')
+    task_list = Task.objects.filter(project__user__username=username, project__name=projectname).order_by('date', 'priority')
     tasks = []
     response_data = {}
     for task in task_list:

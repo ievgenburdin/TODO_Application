@@ -16,7 +16,7 @@
                     <h1>Projects:</h1>
                     {% if projects %}
                         {% for project in projects %}
-                            <button class="side_bar_menu_links" onclick="openProject(event, '{{ project.name }}')">
+                            <button class="side_bar_menu_links" onclick="getProjectTasks('{% url 'get_project_task' %}', '{{ project.name }}')"  getProjectTasks(url, project)>
                                 <div class="colorProject" style="background-color: {{ project.color }};"></div>
                                 <div>{{ project.name }}</div>
                             </button>

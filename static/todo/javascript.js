@@ -222,6 +222,45 @@ function getTasks(url) {
     xhr.send();
 }
 
+function getProjectTasks(url, project) {
+    var xhr, row, cell1, cell2, cell3, cell4,tasksJSON, taskDate;
+    xhr = new XMLHttpRequest();
+    xhr.responseType = 'json';
+    xhr.onreadystatechange = function () {
+        var tasks, taskPriorityColor, taskTable, rows;
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            tasksJSON = xhr.response['tasks'];
+            //Cleaning rows
+            taskTable = document.getElementById("task_menu_content");
+            rows = taskTable.getElementsByTagName("tr");
+            if (rows.length > 1){
+                while (rows.length != 1){
+                    taskTable.deleteRow(rows.length-1);
+                }
+            }
+            for (var i=0; i<tasksJSON.length; i++){
+                taskDate = new Date();
+                taskDate.setYear(tasksJSON[i]['date']['year']);
+                taskDate.setMonth(tasksJSON[i]['date']['month']-1);
+                taskDate.setDate(tasksJSON[i]['date']['day']);
+                taskPriorityColor = setPriorityColor(tasksJSON[i]['priority'], taskDate);
+                //Makeing row in table from received JSON
+                row = taskTable.insertRow(1);
+                cell1 = row.insertCell(0);
+                cell2 = row.insertCell(1);
+                cell3 = row.insertCell(2);
+                cell4 = row.insertCell(3);
+                cell1.innerHTML ='<div class="square" style="background-color:' + taskPriorityColor + '"></div>';
+                cell2.innerHTML = tasksJSON[i]['title'];
+                cell3.innerHTML = tasksJSON[i]['project'];
+                cell4.innerHTML = '<div class="square" style="background-color: ' + tasksJSON[i]['projectColor'] + '"></div>';
+            }
+        }
+    };
+    xhr.open('get', url +'?' + 'project=' + project, true);
+    xhr.send();
+}
+
 function setPriorityColor(taskPriority, taskDate) {
     var priorityColor = {'1':'red', '2': 'orange', '3': 'green'};
     var today = new Date();
