@@ -18,7 +18,7 @@
             TODO
         </div>
         {% if user.is_authenticated %}
-            {{ user.username }} -
+            {{ user.username }}
         <a href="{% url 'logout' %}">Logout</a>
         {% else %}
             <a href="{% url 'login' %}">Login</a>

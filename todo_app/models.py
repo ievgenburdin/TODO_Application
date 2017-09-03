@@ -13,7 +13,7 @@ class Project(models.Model):
 
 class Task(models.Model):
     project = models.ForeignKey(Project, on_delete=models.PROTECT)
-    title = models.CharField(max_length=128)
+    title = models.CharField(max_length=50)
     date = models.DateField()
     priority = models.IntegerField()
 
