@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 import json
 from datetime import datetime, timedelta
+from django.db import IntegrityError
 
 def root(request):
     return HttpResponseRedirect('/index/')
@@ -140,12 +141,16 @@ def add_project(request):
         project = Project(name=project_data['projectName'],
                            color=project_data['projectColor'],
                            user=user)
-        project.save()
-        response_data['name'] = project.name
-        response_data['color'] = project.color
+        try:
+            project.save()
+            response_data['name'] = project.name
+            response_data['color'] = project.color
 
+        except IntegrityError:
+            response_data['errors'] = "Oops! Project name must be unique and max 30 char!"
     else:
         response_data['errors'] = "Wrong request method"
+
     return HttpResponse(
         json.dumps(response_data),
         content_type="application/json")
@@ -161,13 +166,49 @@ def add_task(request):
         task = Task(title=task_data['taskTitle'],
                     date=task_data['taskDate'],
                     priority=task_data['taskPriority'],
-                    project=project)
+                    project=project,
+                    condition=1)
         task.save()
         response_data['taskTitle'] = task.title
         response_data['taskDate'] = task.date
         response_data['taskPriority'] = task.priority
         response_data['taskProject'] = task.project.name
         response_data['taskProjectColor'] = task.project.color
+    else:
+        response_data['errors'] = "Wrong request method"
+    return HttpResponse(
+        json.dumps(response_data),
+        content_type="application/json")
+
+
+@login_required
+@csrf_exempt
+def delete_project(request):
+    response_data = {}
+    if request.method == 'POST':
+        project_data = json.loads(request.body.decode('utf-8'))
+        project = Project.objects.get(name=project_data['projectName'])
+        project.delete()
+        response_data['projectName'] = project.name
+    else:
+        response_data['errors'] = "Wrong request method"
+    return HttpResponse(
+        json.dumps(response_data),
+        content_type="application/json")
+
+
+@login_required
+@csrf_exempt
+def edit_project(request):
+    response_data = {}
+    if request.method == 'POST':
+        project_data = json.loads(request.body.decode('utf-8'))
+        project = Project.objects.get(name=project_data['oldProjectName'])
+        project.name = project_data['projectName']
+        project.color = project_data['projectColor']
+        project.save()
+        response_data['projectName'] = project.name
+        response_data['projectColor'] = project.color
     else:
         response_data['errors'] = "Wrong request method"
     return HttpResponse(

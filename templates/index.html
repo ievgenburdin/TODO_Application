@@ -10,47 +10,61 @@
     <content>
         {% if user.is_authenticated %}
             <div class="side_bar_menu">
-                <div id="side_bar_content">
-                    <button class="side_bar_menu_links" onclick="getTasks('Today', '{% url 'get_today_task' %}')" id="defaultOpen">Today</button>
-                    <button class="side_bar_menu_links" onclick="getTasks('Next 7 days', '{% url 'get_weekly_task' %}')">Next 7 days</button>
+                <button class="side_bar_menu_links" onclick="getTasks(event, 'Today', '{% url 'get_today_task' %}')" id="defaultOpen">Today</button>
+                <button class="side_bar_menu_links" onclick="getTasks(event, 'Next 7 days', '{% url 'get_weekly_task' %}')">Next 7 days</button>
+                <div id="side_bar_content" onmouseleave="hideProjectBtn()">
                     <h1>Projects:</h1>
                     {% if projects %}
                         {% for project in projects %}
-                            <button class="side_bar_menu_links" onclick="getProjectTasks('{% url 'get_project_task' %}', '{{ project.name }}')"  getProjectTasks(url, project)>
-                                <div class="colorProject" style="background-color: {{ project.color }};"></div>
-                                <div>{{ project.name }}</div>
+                            <div class="project_menu">
+                                <button class="project_button" onclick="showHideProjectEditForm('{{ project.name }}', '{{ project.color }}')">Edit</button>
+                                <button class="project_button" onclick="deleteProject('{{ project.name }}', '{% url 'delete_project' %}')">Del</button>
+                            </div>
+                            <button class="side_bar_menu_links" onclick="getProjectTasks(event, '{% url 'get_project_task' %}', '{{ project.name }}')"
+                                    onmouseover="showProjectBtn(this)">
+                                <div class="projectColor" style="background-color: {{ project.color }};"></div>
+                                <div class="projectName">{{ project.name }}</div>
                             </button>
                         {% endfor %}
-                    {% else %}
-                        <div class="side_bar_menu_links">There are no projects</div>
                     {% endif %}
-                    <p id="errorProjectform" class="errorMessage"></p>
-                    <button id="addProjectButton" class="side_bar_menu_links" onclick="showHideProjectForm(event)">Add project</button>
-                    <form id="addProjectForm">
-                        <div class="project_input">
-                            <input id="projectColor" type="color">
-                            <input id="projectName" placeholder="Enter project name" type="text" required>
-                        </div>
-                        <div>
-                            <button class="formButtonAdd" type="button" onclick="sendProjectForm('{{ user }}','{% url 'add_project' %}')">Add</button>
-                            <button class="formButtonCancel" type="button" id="addProjectCancel" onclick="showHideProjectForm()">Cancel</button>
-                        </div>
-                    </form>
                 </div>
-
+                <button id="addProjectButton" class="side_bar_menu_links" onclick="showHideProjectForm()">Add project</button>
+                <form id="editProjectForm">
+                    <p id="errorEditProjectForm"></p>
+                    <div class="project_input">
+                        <input id="editProjectColor" type="color">
+                        <input id="editProjectName"  type="text" required>
+                    </div>
+                    <div>
+                        <button class="formButtonAdd" type="button" id="editProjectEdit"  onclick="sendEditProjectForm('{% url 'edit_project' %}')">Edit</button>
+                        <button class="formButtonCancel" type="button" id="editProjectCancel" onclick="showHideProjectEditForm()">Cancel</button>
+                    </div>
+                </form>
+                <form id="addProjectForm">
+                    <p id="errorProjectForm"></p>
+                    <div class="project_input">
+                        <input id="projectColor" type="color">
+                        <input id="projectName" placeholder="Enter project name" type="text" required>
+                    </div>
+                    <div>
+                        <button class="formButtonAdd" type="button" id="addProjectAdd"  onclick="sendProjectForm('{{ user }}','{% url 'add_project' %}')">Add</button>
+                        <button class="formButtonCancel" type="button" id="addProjectCancel" onclick="showHideProjectForm()">Cancel</button>
+                    </div>
+                </form>
             </div>
-            <div class="task_menu">
+            <div class="task_content">
                 <table class="task_menu_content" id="task_menu_content">
                     <p id="headerContent"></p>
-                    <tr class="task_menu_item">
+                    <tr class="task_menu_item" id="firstRowTaskTable">
                         <td class="task_priority"></td>
                         <td class="task_title"></td>
                         <td class="task_project"></td>
                         <td class="task_color"></td>
+                        <td class="task_menu"></td>
                     </tr>
                 </table>
                 <p id="errorTaskform" class="errorMessage"></p>
-                <button id="addTasktButton" onclick="showHideTaskForm()">Add task</button>
+                <button id="addTaskButton" onclick="showHideTaskForm()">Add task</button>
                 <form id="addTaskForm">
                     <div class="task_input">
                         <input id="taskTitleInput" placeholder="Enter task title" type="text">
@@ -67,7 +81,7 @@
                         <input id="taskDateInput" type="date">
                     </div>
                     <div>
-                        <button type="button" class="formButtonAdd" onclick="sendTaskForm(event ,'{% url 'add_task' %}')">Add</button>
+                        <button type="button" class="formButtonAdd" onclick="sendTaskForm('{% url 'add_task' %}')">Add</button>
                         <button type="button" class="formButtonCancel" id="addTaskCancel" onclick="showHideTaskForm()">Cancel</button>
                     </div>
                 </form>

@@ -16,6 +16,7 @@ class Task(models.Model):
     title = models.CharField(max_length=50)
     date = models.DateField()
     priority = models.IntegerField()
+    condition = models.IntegerField(default=1)
 
     def __str__(self):
         return self.title
