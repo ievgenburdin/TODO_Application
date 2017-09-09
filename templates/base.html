@@ -22,6 +22,7 @@
         {% else %}
             <a href="{% url 'login' %}">Login</a>
         {% endif %}
+        <div class="headerMenu"><button onclick="getTasks(event, 'Archive', '{% url 'get_archive_task' %}')">Archive</button></div>
     </header>
 
     {% block body_block %}

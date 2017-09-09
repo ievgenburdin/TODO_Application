@@ -54,7 +54,7 @@ def logout(request):
 def index(request):
     username = request.user.username
     project_list = Project.objects.filter(user__username=username)
-    task_list = Task.objects.filter(project__user__username=username)
+    task_list = Task.objects.filter(project__user__username=username, condition=1)
     context_dict = {'projects':project_list,
                     'tasks': task_list}
     return render(request, 'index.html', context_dict)
@@ -63,7 +63,7 @@ def index(request):
 @login_required
 def get_today_task(request):
     username = request.user.username
-    task_list = Task.objects.filter(project__user__username=username).order_by('date', 'priority')
+    task_list = Task.objects.filter(project__user__username=username, condition=1).order_by('date', 'priority')
     today = datetime.now().date()
     tasks = []
     response_data = {}
@@ -112,7 +112,7 @@ def get_project_task(request):
     if request.method == 'GET':
         projectname = request.GET['project']
     today = datetime.now().date()
-    task_list = Task.objects.filter(project__user__username=username, project__name=projectname).order_by('date', 'priority')
+    task_list = Task.objects.filter(project__user__username=username, project__name=projectname, condition=1).order_by('date', 'priority')
     tasks = []
     response_data = {}
     for task in task_list:
@@ -130,6 +130,26 @@ def get_project_task(request):
         json.dumps(response_data),
         content_type="application/json")
 
+@login_required
+def get_archive_task(request):
+    username = request.user.username
+    if request.method == 'GET':
+        task_list = Task.objects.filter(project__user__username=username, condition=0).order_by('date', 'priority')
+    tasks = []
+    response_data = {}
+    for task in task_list:
+        task_dict = {'project': task.project.name,
+                     'projectColor': task.project.color,
+                     'title': task.title,
+                     'date': {'day': task.date.day,
+                     'month': task.date.month,
+                     'year': task.date.year},
+                     'priority': task.priority}
+        tasks.append(task_dict)
+    response_data['tasks'] = tasks
+    return HttpResponse(
+        json.dumps(response_data),
+        content_type="application/json")
 
 @login_required
 @csrf_exempt
@@ -176,6 +196,45 @@ def add_task(request):
         response_data['taskProjectColor'] = task.project.color
     else:
         response_data['errors'] = "Wrong request method"
+    return HttpResponse(
+        json.dumps(response_data),
+        content_type="application/json")
+
+
+@login_required
+@csrf_exempt
+def edit_task(request):
+    response_data = {}
+    if request.method == 'POST':
+        task_data = json.loads(request.body.decode('utf-8'))
+        task = Task.objects.get(title=task_data['oldTaskTitle'])
+        task.priority = task_data['taskPriority']
+        task.title = task_data['taskTitle']
+        task.project = Project.objects.get(name=task_data['taskProject'])
+        task.date = task_data['taskDate']
+        task.save()
+        response_data['taskPriority'] = task.priority
+        response_data['taskTitle'] = task.title
+        response_data['taskProject'] = task.project.name
+        response_data['taskDate'] = task.date
+    else:
+        response_data['errors'] = "Wrong request method"
+    return HttpResponse(
+        json.dumps(response_data),
+        content_type="application/json")
+
+
+@login_required
+@csrf_exempt
+def set_done_task(request):
+    response_data = {}
+    if request.method == 'POST':
+        task_data = json.loads(request.body.decode('utf-8'))
+        task = Task.objects.get(title=task_data['taskTitle'])
+        task.condition = 0
+        task.save()
+        response_data['taskCondition'] = task.condition
+        response_data['taskTitle'] = task.title
     return HttpResponse(
         json.dumps(response_data),
         content_type="application/json")
