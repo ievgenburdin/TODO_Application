@@ -12,7 +12,7 @@ class Project(models.Model):
 
 
 class Task(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.PROTECT)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
     title = models.CharField(max_length=50, unique=True)
     date = models.DateField()
     priority = models.IntegerField()

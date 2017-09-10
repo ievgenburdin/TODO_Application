@@ -15,10 +15,14 @@ function showProjectBtn(thisElement) {
     hideMenuBtn(project_menu);
     project_menu[position-2].style.display = "block";
 }
+
+
 function hideProjectBtn() {
     var project_menu = document.getElementsByClassName("project_menu");
     hideMenuBtn(project_menu);
 }
+
+
 function hideMenuBtn(menu) {
     var i;
     for (i=0; i<menu.length; i++){
@@ -26,7 +30,8 @@ function hideMenuBtn(menu) {
     }
 }
 
- function getPosition(element, element_list) {
+
+function getPosition(element, element_list) {
     var i;
     for(i=0; i < element_list.length; i++){
         if (element_list[i] === element){
@@ -34,6 +39,7 @@ function hideMenuBtn(menu) {
         }
     }
  }
+
 
 function switchSideBarButton(evt) {
     var side_bar_menu_links;
@@ -45,14 +51,27 @@ function switchSideBarButton(evt) {
 }
 
 
+function setPriorityColor(taskPriority, taskDate) {
+    var priorityColor = {'3':'green', '2': 'orange', '1': 'red'};
+    var today = new Date();
+    if (today.getDate() > taskDate.getDate() || today.getYear() > taskDate.getYear() || today.getMonth() > taskDate.getMonth()) {
+        return 'red'
+    } else {
+        return priorityColor[taskPriority]
+    }
+}
+
+
 function showHideProjectForm() {
-    var projectForm, addProjectButton, projectEditForm;
+    var projectForm, addProjectButton, projectEditForm, errorProjectform;
     projectForm = document.getElementById("addProjectForm");
     projectEditForm = document.getElementById("editProjectForm");
     addProjectButton = document.getElementById("addProjectButton");
+    errorProjectform = document.getElementById("errorProjectForm");
     if (projectForm.style.display === "block") {
         projectForm.style.display = "none";
         addProjectButton.style.display = "block";
+        errorProjectform.innerText = ""
     }
     else {
         projectEditForm.style.display = "none";
@@ -61,19 +80,21 @@ function showHideProjectForm() {
     }
 }
 
+
 function showHideProjectEditForm(projectName, projectColor) {
     var projectEditForm, addProjectButton, editProjectName, editProjectColor, projectForm;
     projectEditForm = document.getElementById("editProjectForm");
     addProjectButton = document.getElementById("addProjectButton");
     projectForm = document.getElementById("addProjectForm");
-    document.getElementById("editProjectName").value = projectName;
-    document.getElementById("editProjectColor").value = projectColor;
+
     if (projectEditForm.style.display === "block") {
         projectEditForm.style.display = "none";
         addProjectButton.style.display = "block";
 
     }
     else {
+        document.getElementById("editProjectName").value = projectName;
+        document.getElementById("editProjectColor").value = projectColor;
         projectForm.style.display = "none";
         projectEditForm.style.display = "block";
         addProjectButton.style.display = "none";
@@ -84,12 +105,12 @@ function showHideProjectEditForm(projectName, projectColor) {
 
 
 function sendProjectForm(user, url) {
-    var projectName, projectColor, xhr, jsonProjectData, errorProjectform;
+    var projectName, projectColor, xhr, jsonProjectData, errorProjectForm;
     projectName = document.getElementById("projectName").value;
     projectColor = document.getElementById("projectColor").value;
-    errorProjectform = document.getElementById("errorProjectform");
+    errorProjectForm = document.getElementById("errorProjectForm");
     if (projectName === "") {
-        errorProjectform.innerHTML = "Please enter project name";
+        errorProjectForm.innerHTML = "Please enter project name";
     } else {
         xhr = new XMLHttpRequest();
         jsonProjectData = JSON.stringify({
@@ -101,28 +122,48 @@ function sendProjectForm(user, url) {
         xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
         xhr.send(jsonProjectData);
         xhr.onreadystatechange = function () {
-            var newButton, addButton, sideBarMenu, jsonResponse, cancelButton, errorProjectform, newMenu;
+            var newEditButton, newDeleteButton, newProjectButton, newOptionSelect, sideBarMenu, jsonResponse,
+                cancelButton, errorProjectForm, newMenu;
             cancelButton = document.getElementById("addProjectCancel");
-            errorProjectform = document.getElementById("errorProjectForm");
+            errorProjectForm = document.getElementById("errorProjectForm");
             cancelButton.onclick = function () {
                 xhr.abort();
             };
             if (xhr.status == 200 && xhr.readyState == 4) {
                 jsonResponse = JSON.parse(xhr.responseText);
                 if (jsonResponse['errors']) {
-                    errorProjectform.innerHTML = jsonResponse['errors'];
+                    errorProjectForm.innerHTML = jsonResponse['errors'];
                 } else{
                     newMenu = document.createElement('div');
-                    newMenu.innerHTML = '<button class="project_button">Edit</button>' +
-                                '<button class="project_button" onclick="deleteProject(' +
-                                jsonResponse['name'] + ',"/todo/delete_project/")">Del</button>';
-                    newMenu.className = "project_menu";
-                    document.getElementById("side_bar_content").appendChild(newMenu);
-                    newButton = document.createElement('button');
-                    newButton.className = "side_bar_menu_links";
-                    newButton.innerHTML = '<div class="projectColor" style="background-color:' + jsonResponse['color'] + ';"></div>' +
+                    newMenu.setAttribute('class', 'project_menu');
+                    newEditButton = document.createElement('button');
+                    newEditButton.setAttribute('class', 'project_button');
+                    newEditButton.innerText = "Edit";
+                    newEditButton.addEventListener('click', function () {
+                        showHideProjectEditForm(jsonResponse['name'], jsonResponse['color'])
+                    });
+                    newDeleteButton = document.createElement('button');
+                    newDeleteButton.setAttribute('class', 'project_button');
+                    newDeleteButton.innerText = "Del";
+                    newDeleteButton.addEventListener('click', function () {
+                        deleteProject(jsonResponse['name'], '/delete_project/')
+                    });
+                    newMenu.appendChild(newEditButton);
+                    newMenu.appendChild(newDeleteButton);
+
+                    document.getElementById("side_bar_content").insertBefore(newMenu, errorProjectForm);
+                    newProjectButton = document.createElement('button');
+                    newProjectButton.setAttribute('class', 'side_bar_menu_links');
+                    newProjectButton.innerHTML = '<div class="projectColor" style="background-color:' + jsonResponse['color'] + ';"></div>' +
                     '<div class="projectName">' + jsonResponse['name'] + '</div>';
-                    document.getElementById("side_bar_content").appendChild(newButton);
+                    newProjectButton.addEventListener('mouseover', function () {
+                        showProjectBtn(this)
+                    });
+                    newOptionSelect = document.createElement('option');
+                    newOptionSelect.setAttribute('value', jsonResponse['name']);
+                    newOptionSelect.innerText = jsonResponse['name'];
+                    document.getElementById('taskProjectInput').appendChild(newOptionSelect);
+                    document.getElementById("side_bar_content").insertBefore(newProjectButton, errorProjectForm);
                     showHideProjectForm();
                 }
             }
@@ -167,6 +208,7 @@ function showTaskEditForm(element) {
     addTaskButton.style.display = "none";
 }
 
+
 function hideTaskEditForm() {
     var taskForm, addTaskButton, addTaskFormButton, cancelTaskFormButton;
     taskForm = document.getElementById("addTaskForm");
@@ -177,7 +219,6 @@ function hideTaskEditForm() {
     document.getElementById('taskProjectInput').value = "";
     document.getElementById('taskPriorityInput').value = "";
     document.getElementById('taskDateInput').value = "";
-    addTaskFormButton.innerText = "Add";
     taskForm.style.display = "none";
     addTaskButton.style.display = "block";
     addTaskFormButton.removeEventListener('click', function () {
@@ -189,34 +230,43 @@ function hideTaskEditForm() {
 }
 
 
-function showHideTaskAddForm() {
+function showTaskAddForm() {
     var taskForm, addTaskButton, addTaskFormButton, cancelTaskFormButton;
     taskForm = document.getElementById("addTaskForm");
     addTaskButton = document.getElementById("addTaskButton");
     addTaskFormButton = document.getElementById("addTaskFormButton");
     cancelTaskFormButton = document.getElementById("cancelTaskFormButton");
-    if (taskForm.style.display === "block") {
-        taskForm.style.display = "none";
-        addTaskButton.style.display = "block";
-        addTaskFormButton.addEventListener('click', function () {
-            sendTaskForm('/add_task/')
-        });
-        cancelTaskFormButton.addEventListener('click', function () {
-            showHideTaskAddForm()
-        });
-        addTaskFormButton.innerText = "Add";
-    }
-    else {
-        taskForm.style.display = "block";
-        addTaskButton.style.display = "none";
-        addTaskFormButton.removeEventListener('click', function () {
-            sendTaskForm('/add_task/')
-        });
-        cancelTaskFormButton.addEventListener('click', function () {
-            showHideTaskAddForm()
-        });
+    taskForm.style.display = "block";
+    addTaskButton.style.display = "none";
+    addTaskFormButton.addEventListener('click', function () {
+        sendTaskForm('/add_task/')
+    });
+    cancelTaskFormButton.addEventListener('click', function () {
+        hideTaskAddForm()
+    });
+    addTaskFormButton.innerText = "Add";
+}
 
-    }
+
+function hideTaskAddForm() {
+    var taskForm, addTaskButton, addTaskFormButton, cancelTaskFormButton;
+    taskForm = document.getElementById("addTaskForm");
+    addTaskButton = document.getElementById("addTaskButton");
+    addTaskFormButton = document.getElementById("addTaskFormButton");
+    cancelTaskFormButton = document.getElementById("cancelTaskFormButton");
+    taskForm.style.display = "none";
+    addTaskButton.style.display = "block";
+    document.getElementById('taskTitleInput').value = "";
+    document.getElementById('taskProjectInput').value = "";
+    document.getElementById('taskPriorityInput').value = "";
+    document.getElementById('taskDateInput').value = "";
+    document.getElementById('errorTaskform').innerHTML = "";
+    addTaskFormButton.removeEventListener('click', function () {
+        sendTaskForm('/add_task/')
+    });
+    cancelTaskFormButton.removeEventListener('click', function () {
+        showHideTaskAddForm()
+    });
 }
 
 
@@ -310,7 +360,6 @@ function setDoneTask(element, url) {
     position = getPosition(element, task_done_buttons);
     task_row = document.getElementsByClassName('task_row')[position];
     taskTitle = task_row.children[1].textContent;
-    console.log(taskTitle);
     xhr = new XMLHttpRequest();
     jsonTaskData = JSON.stringify({
         'taskTitle':taskTitle
@@ -319,19 +368,14 @@ function setDoneTask(element, url) {
     xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
     xhr.send(jsonTaskData);
     xhr.onreadystatechange = function () {
-        var cancelButton;
-        cancelButton = document.getElementById("cancelTaskFormButton");
-        cancelButton.onclick = function () {
-            xhr.abort();
-        };
-
+        var task_row;
         if (xhr.readyState != 4) return;
         if (xhr.status == 200) {
+            task_row = document.getElementsByClassName('task_row')[position];
             jsonResponse = JSON.parse(xhr.responseText);
             if(jsonResponse['taskCondition'] ==  0){
-                console.log(jsonResponse['taskCondition'], jsonResponse['taskTitle'])
+                task_row.remove();
             }
-
         }
     }
 }
@@ -347,19 +391,19 @@ function deleteProject(projectName, url) {
     xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
     xhr.send(jsonProjectData);
     xhr.onreadystatechange = function () {
-        var jsonResponse, errorProjectform, side_bar_menu_links, project_name, project_menu;
-        errorProjectform = document.getElementById("errorProjectform");
+        var jsonResponse, errorProjectform, side_bar_menu_links, project_name, project_menu, task_project_input;
+        errorProjectform = document.getElementById("errorProjectForm");
         side_bar_menu_links = document.getElementsByClassName("side_bar_menu_links");
         if (xhr.status == 200 && xhr.readyState == 4) {
             jsonResponse = JSON.parse(xhr.responseText);
             if (jsonResponse['errors']) {
                 errorProjectform.innerHTML = jsonResponse['errors'];
             } else{
-                project_name = document.getElementsByClassName("project_name");
+                project_name = document.getElementsByClassName("projectName");
                 project_menu = document.getElementsByClassName("project_menu");
+                task_project_input = document.getElementById("taskProjectInput");
                 for (var i=0; i < project_name.length; i++){
                     if(project_name[i].textContent == projectName){
-                        console.log(project_name[i].textContent);
                         side_bar_menu_links[i+2].remove();
                         project_menu[i].remove();
                     }
@@ -371,7 +415,7 @@ function deleteProject(projectName, url) {
 
 
 function sendTaskForm(url) {
-    var taskTitle, taskProject, taskPriority,taskDate, errorTaskform, jsonTaskData;
+    var taskTitle, taskProject, taskPriority,taskDate, errorTaskform, jsonTaskData, jsonResponse;
     taskTitle = document.getElementById("taskTitleInput").value;
     taskProject = document.getElementById("taskProjectInput").value;
     taskPriority = document.getElementById("taskPriorityInput").value;
@@ -398,8 +442,14 @@ function sendTaskForm(url) {
             };
             if (xhr.readyState != 4) return;
             if (xhr.status == 200) {
-                document.getElementById("defaultOpen").click();
-                showHideProjectForm();
+                jsonResponse = JSON.parse(xhr.responseText);
+                if (jsonResponse['errors']){
+                    errorTaskform.innerText = jsonResponse['errors'];
+                    console.log(jsonResponse['errors']);
+                } else if (! jsonResponse['errors']){
+                    document.getElementById("defaultOpen").click();
+                    hideTaskAddForm()
+                }
             }
         }
     }
@@ -422,6 +472,7 @@ function getTasks(evt ,headerTitle ,url) {
     xhr.send();
 }
 
+
 function getProjectTasks(evt ,url, project) {
     document.getElementById('header_content').innerHTML = project;
     switchSideBarButton(evt);
@@ -432,7 +483,6 @@ function getProjectTasks(evt ,url, project) {
         if (xhr.readyState == 4 && xhr.status == 200) {
             tasksJSON = xhr.response['tasks'];
             renderingTasks(tasksJSON);
-
         }
     };
     xhr.open('get', url +'?' + 'project=' + project, true);
@@ -440,8 +490,7 @@ function getProjectTasks(evt ,url, project) {
 }
 
 
-
-function renderingTasks(tasksJSON) {
+function renderingTasks(tasksJSON, evt) {
     var row, day, year, month, taskPriorityColor, taskDate, task_priority, task_title, task_project, task_date,
         task_color_project, rows, task_menu, edit_button, done_button, task_list;
     cleanTaskList();
@@ -515,6 +564,8 @@ function renderingTasks(tasksJSON) {
         task_menu[m].appendChild(done_button);
     }
 }
+
+
 function showHideTaskMenu(element) {
     var task_rows, position, task_menu;
     task_menu = document.getElementsByClassName('task_menu');
@@ -534,12 +585,4 @@ function cleanTaskList() {
 }
 
 
-function setPriorityColor(taskPriority, taskDate) {
-    var priorityColor = {'3':'green', '2': 'orange', '1': 'red'};
-    var today = new Date();
-    if (today.getDate() > taskDate.getDate() || today.getYear() > taskDate.getYear() || today.getMonth() > taskDate.getMonth()) {
-        return 'red'
-    } else {
-        return priorityColor[taskPriority]
-    }
-}
+

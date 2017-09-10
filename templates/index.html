@@ -26,22 +26,22 @@
                                 <div class="projectName">{{ project.name }}</div>
                             </button>
                         {% endfor %}
+                        <p id="errorProjectForm"></p>
                     {% endif %}
                 </div>
                 <button id="addProjectButton" class="side_bar_menu_links" onclick="showHideProjectForm()">Add project</button>
+
                 <form id="editProjectForm">
-                    <p id="errorEditProjectForm"></p>
                     <div class="project_input">
                         <input id="editProjectColor" type="color">
                         <input id="editProjectName"  type="text" required>
                     </div>
                     <div>
                         <button class="formButtonAdd" type="button" id="editProjectEdit"  onclick="sendEditProjectForm('{% url 'edit_project' %}')">Edit</button>
-                        <button class="formButtonCancel" type="button" id="editProjectCancel" onclick="showHideProjectEditForm()">Cancel</button>
+                        <button class="formButtonCancel" type="button" id="editProjectCancel" onclick="showHideProjectEditForm('', '#000000')">Cancel</button>
                     </div>
                 </form>
                 <form id="addProjectForm">
-                    <p id="errorProjectForm"></p>
                     <div class="project_input">
                         <input id="projectColor" type="color">
                         <input id="projectName" placeholder="Enter project name" type="text" required>
@@ -67,7 +67,7 @@
                     -->
                 </div>
 
-            <button id="addTaskButton" onclick="showHideTaskAddForm()">Add task</button>
+            <button id="addTaskButton" onclick="showTaskAddForm()">Add task</button>
             <form id="addTaskForm">
                     <p id="errorTaskform" class="errorMessage"></p>
                     <div class="task_input">

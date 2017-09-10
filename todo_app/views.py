@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from todo_app.models import Project, Task
-from todo_app.forms import UserForm, ProjectForm
+from todo_app.forms import UserForm
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate as auth_authenticate
 from django.contrib.auth import login as auth_login
@@ -87,7 +87,7 @@ def get_today_task(request):
 def get_week_task(request):
     username = request.user.username
     today = datetime.now().date()
-    task_list = Task.objects.filter(project__user__username=username).order_by('date', 'priority')
+    task_list = Task.objects.filter(project__user__username=username, condition=1).order_by('date', 'priority')
     tasks = []
     response_data = {}
     for task in task_list:
@@ -135,21 +135,22 @@ def get_archive_task(request):
     username = request.user.username
     if request.method == 'GET':
         task_list = Task.objects.filter(project__user__username=username, condition=0).order_by('date', 'priority')
-    tasks = []
-    response_data = {}
-    for task in task_list:
-        task_dict = {'project': task.project.name,
-                     'projectColor': task.project.color,
-                     'title': task.title,
-                     'date': {'day': task.date.day,
-                     'month': task.date.month,
-                     'year': task.date.year},
-                     'priority': task.priority}
-        tasks.append(task_dict)
-    response_data['tasks'] = tasks
-    return HttpResponse(
-        json.dumps(response_data),
-        content_type="application/json")
+        tasks = []
+        response_data = {}
+        for task in task_list:
+            task_dict = {'project': task.project.name,
+                         'projectColor': task.project.color,
+                         'title': task.title,
+                         'date': {'day': task.date.day,
+                         'month': task.date.month,
+                         'year': task.date.year},
+                         'priority': task.priority}
+            tasks.append(task_dict)
+        response_data['tasks'] = tasks
+        return HttpResponse(
+            json.dumps(response_data),
+            content_type="application/json")
+
 
 @login_required
 @csrf_exempt
@@ -159,8 +160,8 @@ def add_project(request):
         project_data = json.loads(request.body.decode('utf-8'))
         user = User.objects.get(username=project_data['user'])
         project = Project(name=project_data['projectName'],
-                           color=project_data['projectColor'],
-                           user=user)
+                          color=project_data['projectColor'],
+                          user=user)
         try:
             project.save()
             response_data['name'] = project.name
@@ -188,12 +189,15 @@ def add_task(request):
                     priority=task_data['taskPriority'],
                     project=project,
                     condition=1)
-        task.save()
-        response_data['taskTitle'] = task.title
-        response_data['taskDate'] = task.date
-        response_data['taskPriority'] = task.priority
-        response_data['taskProject'] = task.project.name
-        response_data['taskProjectColor'] = task.project.color
+        try:
+            task.save()
+            response_data['taskTitle'] = task.title
+            response_data['taskDate'] = task.date
+            response_data['taskPriority'] = task.priority
+            response_data['taskProject'] = task.project.name
+            response_data['taskProjectColor'] = task.project.color
+        except IntegrityError:
+            response_data['errors'] = "Oops! Project name must be unique and max 30 char!"
     else:
         response_data['errors'] = "Wrong request method"
     return HttpResponse(
@@ -247,8 +251,16 @@ def delete_project(request):
     if request.method == 'POST':
         project_data = json.loads(request.body.decode('utf-8'))
         project = Project.objects.get(name=project_data['projectName'])
-        project.delete()
-        response_data['projectName'] = project.name
+        try:
+            task = Task.objects.get(project__name=project_data['projectName'], condition=1)
+            if task:
+                response_data['errors'] = "Have no completed tasks"
+            else:
+                project.delete()
+                response_data['projectName'] = project.name
+        except:
+            project.delete()
+            response_data['projectName'] = project.name
     else:
         response_data['errors'] = "Wrong request method"
     return HttpResponse(
