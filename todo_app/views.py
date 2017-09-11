@@ -116,15 +116,14 @@ def get_project_task(request):
     tasks = []
     response_data = {}
     for task in task_list:
-        if task.date < today + timedelta(days=7):
-            task_dict = {'project':task.project.name,
-                         'projectColor': task.project.color,
-                         'title':task.title,
-                         'date':{'day':task.date.day,
-                                 'month':task.date.month,
-                                 'year':task.date.year},
-                         'priority':task.priority}
-            tasks.append(task_dict)
+        task_dict = {'project':task.project.name,
+                     'projectColor': task.project.color,
+                     'title':task.title,
+                     'date':{'day':task.date.day,
+                             'month':task.date.month,
+                             'year':task.date.year},
+                     'priority':task.priority}
+        tasks.append(task_dict)
     response_data['tasks'] = tasks
     return HttpResponse(
         json.dumps(response_data),
@@ -211,16 +210,21 @@ def edit_task(request):
     response_data = {}
     if request.method == 'POST':
         task_data = json.loads(request.body.decode('utf-8'))
+        project = Project.objects.get(name=task_data['taskProject'])        
         task = Task.objects.get(title=task_data['oldTaskTitle'])
+        task.project = project
         task.priority = task_data['taskPriority']
-        task.title = task_data['taskTitle']
-        task.project = Project.objects.get(name=task_data['taskProject'])
-        task.date = task_data['taskDate']
-        task.save()
-        response_data['taskPriority'] = task.priority
-        response_data['taskTitle'] = task.title
-        response_data['taskProject'] = task.project.name
-        response_data['taskDate'] = task.date
+        task.title = task_data['taskTitle']        
+        task.date = task_data['taskDate']            
+        try:
+            task.save()
+            response_data['taskPriority'] = task.priority
+            response_data['taskTitle'] = task.title
+            response_data['taskProject'] = task.project.name
+            response_data['taskDate'] = task.date
+        except IntegrityError:
+            response_data['errors'] = "Oops! Project name must be unique and max 50 char!"
+        
     else:
         response_data['errors'] = "Wrong request method"
     return HttpResponse(
@@ -252,9 +256,9 @@ def delete_project(request):
         project_data = json.loads(request.body.decode('utf-8'))
         project = Project.objects.get(name=project_data['projectName'])
         try:
-            task = Task.objects.get(project__name=project_data['projectName'], condition=1)
-            if task:
-                response_data['errors'] = "Have no completed tasks"
+            tasks = Task.objects.filter(project__name=project_data['projectName'], condition=1)
+            if tasks:
+                response_data['errors'] = "Project have no completed tasks!"
             else:
                 project.delete()
                 response_data['projectName'] = project.name

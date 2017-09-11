@@ -26,8 +26,10 @@
                                 <div class="projectName">{{ project.name }}</div>
                             </button>
                         {% endfor %}
-                        <p id="errorProjectForm"></p>
+                    {% else %}    
+                        <p id="errorProjectForm"> There are no projects! </p>
                     {% endif %}
+                    <p id="errorProjectForm"></p>
                 </div>
                 <button id="addProjectButton" class="side_bar_menu_links" onclick="showHideProjectForm()">Add project</button>
 
