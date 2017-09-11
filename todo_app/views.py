@@ -1,16 +1,18 @@
-from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
-from todo_app.models import Project, Task
-from todo_app.forms import UserForm
-from django.contrib.auth.models import User
+import json
+from datetime import datetime, timedelta
+
 from django.contrib.auth import authenticate as auth_authenticate
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import csrf_exempt
-import json
-from datetime import datetime, timedelta
+from django.contrib.auth.models import User
 from django.db import IntegrityError
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from todo_app.forms import UserForm
+
+from todo_app.models import Project, Task
 
 def root(request):
     return HttpResponseRedirect('/index/')

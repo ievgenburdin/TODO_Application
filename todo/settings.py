@@ -21,7 +21,7 @@ MEDIA_ROOT = MEDIA_DIR
 MEDIA_URL = '/media/'
 
 
-STATIC_DIR = os.path.join(BASE_DIR, 'static')
+STATIC_DIR = os.path.join(BASE_DIR, '../../../Users/Ievgen/PycharmProjects/todo/static')
 
 STATICFILES_DIRS = [STATIC_DIR, ]
 
