@@ -4,7 +4,7 @@
 
 document.onload = onload();
 function onload() {
-    //document.getElementById("defaultOpen").click();
+    document.getElementById("defaultOpen").click();
 }
 
 function showProjectBtn(thisElement) {
@@ -48,6 +48,7 @@ function switchSideBarButton(evt) {
         side_bar_menu_links[i].className = side_bar_menu_links[i].className.replace("active", "");
     }
     evt.currentTarget.className += " active";
+    document.getElementById('errorProjectForm').innerText =""
 }
 
 
@@ -86,7 +87,6 @@ function showHideProjectEditForm(projectName, projectColor) {
     projectEditForm = document.getElementById("editProjectForm");
     addProjectButton = document.getElementById("addProjectButton");
     projectForm = document.getElementById("addProjectForm");
-
     if (projectEditForm.style.display === "block") {
         projectEditForm.style.display = "none";
         addProjectButton.style.display = "block";
@@ -159,12 +159,17 @@ function sendProjectForm(user, url) {
                     newProjectButton.addEventListener('mouseover', function () {
                         showProjectBtn(this)
                     });
+                    newProjectButton.addEventListener('click', function () {
+                        getProjectTasks(event ,'/get_project_task/', jsonResponse['name'])
+                    });
                     newOptionSelect = document.createElement('option');
                     newOptionSelect.setAttribute('value', jsonResponse['name']);
                     newOptionSelect.innerText = jsonResponse['name'];
                     document.getElementById('taskProjectInput').appendChild(newOptionSelect);
                     document.getElementById("side_bar_content").insertBefore(newProjectButton, errorProjectForm);
                     showHideProjectForm();
+                    location.reload()
+
                 }
             }
         }
@@ -199,12 +204,9 @@ function showTaskEditForm(element) {
     document.getElementById('taskDateInput').value = task['date'];
     document.getElementById("addTaskForm").style.display = "block";
     addTaskFormButton.innerText = "Edit";
-    cancelTaskFormButton.addEventListener('click', function () {
-        hideTaskEditForm()
-    });
-    addTaskFormButton.addEventListener('click', function () {
-        sendEditTaskForm('/edit_task/')
-    });
+    addTaskFormButton.removeEventListener('click', addTaskClick);
+    cancelTaskFormButton.addEventListener('click', hideTaskEditForm);
+    addTaskFormButton.addEventListener('click', editTaskClick);
     addTaskButton.style.display = "none";
 }
 
@@ -215,22 +217,19 @@ function hideTaskEditForm() {
     addTaskButton = document.getElementById("addTaskButton");
     addTaskFormButton = document.getElementById("addTaskFormButton");
     cancelTaskFormButton = document.getElementById("cancelTaskFormButton");
-    document.getElementById('taskTitleInput').value = "Enter task title";
+    document.getElementById('taskTitleInput').value = "";
     document.getElementById('taskProjectInput').value = "";
     document.getElementById('taskPriorityInput').value = "";
     document.getElementById('taskDateInput').value = "";
     taskForm.style.display = "none";
     addTaskButton.style.display = "block";
-    addTaskFormButton.removeEventListener('click', function () {
-        sendTaskForm('/edit_task/')
-    });
-    cancelTaskFormButton.removeEventListener('click', function () {
-        hideTaskEditForm()
-    });
+    addTaskFormButton.removeEventListener('click', editTaskClick);
+    cancelTaskFormButton.removeEventListener('click', hideTaskEditForm);
 }
 
 
 function showTaskAddForm() {
+	hideTaskEditForm()
     var taskForm, addTaskButton, addTaskFormButton, cancelTaskFormButton;
     taskForm = document.getElementById("addTaskForm");
     addTaskButton = document.getElementById("addTaskButton");
@@ -238,12 +237,9 @@ function showTaskAddForm() {
     cancelTaskFormButton = document.getElementById("cancelTaskFormButton");
     taskForm.style.display = "block";
     addTaskButton.style.display = "none";
-    addTaskFormButton.addEventListener('click', function () {
-        sendTaskForm('/add_task/')
-    });
-    cancelTaskFormButton.addEventListener('click', function () {
-        hideTaskAddForm()
-    });
+    addTaskFormButton.removeEventListener('click', editTaskClick);
+    addTaskFormButton.addEventListener('click', addTaskClick);
+    cancelTaskFormButton.addEventListener('click', hideTaskAddForm);
     addTaskFormButton.innerText = "Add";
 }
 
@@ -261,14 +257,18 @@ function hideTaskAddForm() {
     document.getElementById('taskPriorityInput').value = "";
     document.getElementById('taskDateInput').value = "";
     document.getElementById('errorTaskform').innerHTML = "";
-    addTaskFormButton.removeEventListener('click', function () {
-        sendTaskForm('/add_task/')
-    });
-    cancelTaskFormButton.removeEventListener('click', function () {
-        showHideTaskAddForm()
-    });
+    addTaskFormButton.removeEventListener('click', addTaskClick);
+    cancelTaskFormButton.removeEventListener('click', hideTaskAddForm);
 }
 
+function addTaskClick(){
+	sendTaskForm('/add_task/')
+	
+}
+function editTaskClick(){
+	sendTaskForm('/edit_task/')
+	
+}
 
 function sendEditProjectForm(url) {
     var projectName, projectColor, errorProjectform, xhr, jsonProjectData;
@@ -310,6 +310,7 @@ function sendEditProjectForm(url) {
                     window.oldProjectName = null;
                     window.oldProjectColor = null;
                     showHideProjectEditForm();
+                    location.reload()
                 }
             }
         }
@@ -317,7 +318,7 @@ function sendEditProjectForm(url) {
 }
 
 
-function sendEditTaskForm(url) {
+function sendTaskForm(url) {
     var taskTitle, taskProject, taskPriority,taskDate, errorTaskform, jsonTaskData;
     taskTitle = document.getElementById("taskTitleInput").value;
     taskProject = document.getElementById("taskProjectInput").value;
@@ -346,8 +347,14 @@ function sendEditTaskForm(url) {
             };
             if (xhr.readyState != 4) return;
             if (xhr.status == 200) {
-                hideTaskEditForm();
-                window.oldTaskTitle = "null";
+            	jsonResponse = JSON.parse(xhr.responseText);
+                if (jsonResponse['errors']){
+                    errorTaskform.innerText = jsonResponse['errors'];
+                } else {
+                	document.getElementById("defaultOpen").click();
+					hideTaskEditForm();
+                }                
+                              
             }
         }
     }
@@ -406,49 +413,11 @@ function deleteProject(projectName, url) {
                     if(project_name[i].textContent == projectName){
                         side_bar_menu_links[i+2].remove();
                         project_menu[i].remove();
+                        taskProjectInput[i].remove();
+                        if(project_menu.length == 0){
+                        	document.getElementById("errorProjectForm").innerText = "There are no projects"
+                        }
                     }
-                }
-            }
-        }
-    }
-}
-
-
-function sendTaskForm(url) {
-    var taskTitle, taskProject, taskPriority,taskDate, errorTaskform, jsonTaskData, jsonResponse;
-    taskTitle = document.getElementById("taskTitleInput").value;
-    taskProject = document.getElementById("taskProjectInput").value;
-    taskPriority = document.getElementById("taskPriorityInput").value;
-    taskDate = document.getElementById("taskDateInput").value;
-    errorTaskform = document.getElementById("errorTaskform");
-    if (taskDate === "" || taskTitle === ""){
-        errorTaskform.innerHTML = "Please fill all field";
-    } else {
-        xhr = new XMLHttpRequest();
-        jsonTaskData = JSON.stringify({
-            'taskTitle':taskTitle,
-            'taskProject': taskProject,
-            'taskPriority': taskPriority,
-            'taskDate': taskDate
-        });
-        xhr.open('post', url, true);
-        xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
-        xhr.send(jsonTaskData);
-        xhr.onreadystatechange = function () {
-            var cancelButton;
-            cancelButton = document.getElementById("cancelTaskFormButton");
-            cancelButton.onclick = function () {
-                xhr.abort();
-            };
-            if (xhr.readyState != 4) return;
-            if (xhr.status == 200) {
-                jsonResponse = JSON.parse(xhr.responseText);
-                if (jsonResponse['errors']){
-                    errorTaskform.innerText = jsonResponse['errors'];
-                    console.log(jsonResponse['errors']);
-                } else if (! jsonResponse['errors']){
-                    document.getElementById("defaultOpen").click();
-                    hideTaskAddForm()
                 }
             }
         }
